@@ -12,8 +12,10 @@
 #include <unordered_map>
 #include <array>
 
-enum SquareValue {EMPTY, X, O};
-enum Direction {n, ne, e, se, s, sw, w, nw, NO_DIRECTION};
+enum SquareValue {EMPTY, X, O, NO_SQUARE, I};
+enum Direction {N, NE, E, SE, S, SW, W, NW, NO_DIRECTION};
+
+using DirectionValue = std::array<int, 2>;
 
 int const NO_VALUE = std::numeric_limits<unsigned int>::min();
 
@@ -64,42 +66,55 @@ public:
 
     ~GameBoard();
 
+    // Sets all squares to empty
     void clearBoard();
 
-    bool setValue(Coord coord, SquareValue value);
+    // Sets given value for the square on given coordinate
+    bool setValue(SquareValue value, Coord coord);
 
+    // Checks if game is won
     bool isGameWon();
 
+    bool hasGameEnded();
 
+    // Returns 1 or 2 depending on which player's turn it is
+    unsigned int getPlayerInTurn();
+    // Returns the value of square in given coordinate
+    SquareValue getSquareValue(Coord coord);
 
 private:
 
-    void addNeighbors(Square* square);
-    unsigned int countValuesInRow(Square* square, int valuesInRow, SquareValue valueToCheck, Direction direction);
+    // Counts how many of given value are on a row in given direction
+    unsigned int countValuesInRow(Square* square, int valuesInRow, SquareValue valueToCheck, Direction dir);
+    // Get direction of neighboring square
     Direction getNeighborDirection(Square* square, Square* neighbor);
+    // Get direction opposite of the given one
     Direction getOppositeDirection(Direction dir);
-    std::array<int, 2> getValueByDirection(Direction dir);
-    Direction getDirectionByValue(std::array<int, 2> value);
+    // Get a direction value by its code
+    DirectionValue getValueByDirection(Direction dir);
+    // Get a direction code by its value
+    Direction getDirectionByValue(DirectionValue value);
+    // Add all neighbors for a square
+    void addNeighbors(Square* square);
 
 
     std::unordered_map<Coord, Square*, CoordHash> gameBoard_;
 
     const int DIRECTION_VALUES_[8][2] = {
-        {0, 1},   // n
-        {1, 1},   // ne
-        {1, 0},   // e
-        {1, -1},  // se
-        {0, -1},  // s
-        {-1, -1}, // sw
-        {-1, 0},  // w
-        {-1, 1}   // nw
+        {0, 1},   // N
+        {1, 1},   // NE
+        {1, 0},   // E
+        {1, -1},  // SE
+        {0, -1},  // S
+        {-1, -1}, // SW
+        {-1, 0},  // W
+        {-1, 1}   // NW
     };
 
-    const Direction DIRECTIONS_[8] = {n, ne, e, se, s, sw, w, nw};
+    const Direction DIRECTIONS_[8] = {N, NE, E, SE, S, SW, W, NW};
 
     Square* latestSquare_ = nullptr;
-
-    int turnsPlayed_ = 0;
+    unsigned int turnsPlayed_ = 0;
 
     unsigned int BOARD_HEIGHT_ = NO_VALUE;
     unsigned int BOARD_WIDTH_ = NO_VALUE;

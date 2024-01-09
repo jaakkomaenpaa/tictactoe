@@ -1,5 +1,7 @@
 #include "gameboard.hh"
 
+#include <iostream>
+
 using BoardIter = std::unordered_map<Coord, Square*, CoordHash>::iterator;
 using BoardEntry = std::pair<const Coord, Square*>;
 using NeighborEntry = std::pair<const Direction, Square*>;
@@ -37,27 +39,30 @@ void GameBoard::clearBoard() {
     }
 }
 
-bool GameBoard::setValue(Coord coord, SquareValue value) {
+bool GameBoard::setValue(SquareValue value, Coord coord) {
 
     BoardIter square_it = gameBoard_.find(coord);
 
     if (square_it == gameBoard_.end()) {
+        std::cout << "square not found" << "\n";
         return false;
     }
 
     Square* square = square_it->second;
     square->value = value;
 
-    turnsPlayed_ += 0.5;
+    turnsPlayed_++;
     latestSquare_ = square;
     return true;
 }
 
 bool GameBoard::isGameWon() {
 
-    if (turnsPlayed_ + 0.5 < GOAL_) {
+    /*
+    if ((turnsPlayed_+1) / 2 < GOAL_) {
         return false;
     }
+    */
 
     SquareValue valueToCheck = latestSquare_->value;
 
@@ -78,13 +83,38 @@ bool GameBoard::isGameWon() {
         // Sum of original square and values in both directions
         unsigned int sumOfValues = 1 + valuesInDirection + valuesInOpposite;
 
+        std::cout << "Sum: " << sumOfValues << "\n";
+
         if (sumOfValues >= GOAL_) {
             return true;
         }
+
     }
 
     return false;
 }
+
+unsigned int GameBoard::getPlayerInTurn() {
+
+    if (turnsPlayed_ % 2 == 0) {
+        return 1;
+    }
+    return 2;
+}
+
+SquareValue GameBoard::getSquareValue(Coord coord) {
+
+    BoardIter it = gameBoard_.find(coord);
+
+    if (it == gameBoard_.end()) {
+        return NO_SQUARE;
+    }
+
+    return it->second->value;
+}
+
+/* ################### PRIVATE FUNCTIONS ##################### */
+
 
 unsigned int GameBoard::countValuesInRow(Square* square, int valuesInRow, SquareValue valueToCheck, Direction dir) {
 
@@ -102,7 +132,7 @@ Direction GameBoard::getNeighborDirection(Square* square, Square* neighbor) {
     Coord sqCoord = square->location;
     Coord nbCoord = neighbor->location;
 
-    std::array<int, 2> diff = {
+    DirectionValue diff = {
         static_cast<int>(nbCoord.x) - static_cast<int>(sqCoord.x),
         static_cast<int>(nbCoord.y) - static_cast<int>(sqCoord.y),
     };
@@ -112,7 +142,7 @@ Direction GameBoard::getNeighborDirection(Square* square, Square* neighbor) {
 
 Direction GameBoard::getOppositeDirection(Direction dir) {
 
-    std::array<int, 2> directionValue = getValueByDirection(dir);
+    DirectionValue directionValue = getValueByDirection(dir);
 
     // Change to opposite direction value
     directionValue[0] *= -1;
@@ -122,11 +152,11 @@ Direction GameBoard::getOppositeDirection(Direction dir) {
     return getDirectionByValue(directionValue);
 }
 
-std::array<int, 2> GameBoard::getValueByDirection(Direction dir) {
+DirectionValue GameBoard::getValueByDirection(Direction dir) {
 
-    std::array<int, 2> directionValue = {};
+    DirectionValue directionValue = {};
 
-    for (unsigned int i = 0; i < sizeof(DIRECTIONS_); i++) {
+    for (unsigned int i = 0; i < std::size(DIRECTIONS_); i++) {
         if (dir == DIRECTIONS_[i]) {
             directionValue[0] = DIRECTION_VALUES_[i][0];
             directionValue[1] = DIRECTION_VALUES_[i][1];
@@ -136,9 +166,9 @@ std::array<int, 2> GameBoard::getValueByDirection(Direction dir) {
     return directionValue;
 }
 
-Direction GameBoard::getDirectionByValue(std::array<int, 2> value) {
+Direction GameBoard::getDirectionByValue(DirectionValue value) {
 
-    for (unsigned int i = 0; i < sizeof(DIRECTIONS_); i++) {
+    for (unsigned int i = 0; i < std::size(DIRECTIONS_); i++) {
         if (value[0] == DIRECTION_VALUES_[i][0] && value[1] == DIRECTION_VALUES_[i][1]) {
             return DIRECTIONS_[i];
         }
@@ -152,7 +182,7 @@ void GameBoard::addNeighbors(Square* square) {
 
     Coord sqCoord = square->location;
 
-    for (unsigned int i = 0; i < sizeof(DIRECTIONS_); i++) {
+    for (unsigned int i = 0; i < std::size(DIRECTIONS_); i++) {
         int xCoord = sqCoord.x + DIRECTION_VALUES_[i][0];
         int yCoord = sqCoord.y + DIRECTION_VALUES_[i][1];
 
