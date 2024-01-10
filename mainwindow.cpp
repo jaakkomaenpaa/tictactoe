@@ -3,6 +3,10 @@
 
 #include <QPushButton>
 #include <QLabel>
+#include <QBrush>
+
+using SquareEntry = std::pair<const Coord, QPushButton*>;
+using SquareIter = std::unordered_map<Coord, QPushButton*, CoordHash>::iterator;
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -37,7 +41,7 @@ void MainWindow::createUI() {
     widthComboBox->setGeometry(90, 30, 80, 30);
     goalComboBox->setGeometry(170, 30, 80, 30);
     startButton->setGeometry(50, 70, 100, 30);
-    turnLabel_->setGeometry(100, 100, 200, 30);
+    turnLabel_->setGeometry(30, 100, 200, 30);
 
     for (const int& size : BOARD_SIZES_) {
         heightComboBox->addItem(QString::number(size));
@@ -85,6 +89,8 @@ void MainWindow::createGameBoard(unsigned int height, unsigned int width, unsign
 
             square->setGeometry(square_x, square_y, SQUARE_SIZE_, SQUARE_SIZE_);
 
+            squares_.insert({{col,row}, square});
+
             connect(square, &QPushButton::clicked, this, [=]() {
                 setSquareValue({col,row}, square);
             });
@@ -106,8 +112,49 @@ void MainWindow::setSquareValue(Coord coord, QPushButton* square) {
     gameBoard_->setValue(value, coord);
 
     std::string stringValue = value == X ? "X" : "O";
-
     square->setText(QString::fromStdString(stringValue));
 
     changeTurnLabel();
+
+    checkWin();
+}
+
+void MainWindow::checkWin() {
+
+    bool gameEnded = false;
+
+    if (gameBoard_->gameWon()) {
+
+        gameEnded = true;
+        handleGameWin();
+
+    } else if (gameBoard_->gameDrawn()) {
+
+        gameEnded = true;
+        turnLabel_->setText("Game ended in a draw");
+    }
+
+    if (gameEnded) {
+        for (SquareEntry& square : squares_) {
+            square.second->setDisabled(true);
+        }
+    }
+
+}
+
+void MainWindow::handleGameWin() {
+
+    unsigned int playerInTurn = gameBoard_->getPlayerInTurn();
+    unsigned int winner = playerInTurn == 1 ? 2 : 1;
+    turnLabel_->setText("Player " + QString::number(winner) + " has won!");
+
+    std::vector<Coord> winningCoords = gameBoard_->getWinningSquares();
+
+    for (Coord coord : winningCoords) {
+        SquareIter it = squares_.find(coord);
+
+        if (it != squares_.end()) {
+            it->second->setStyleSheet("background-color: lightgreen;");
+        }
+    }
 }

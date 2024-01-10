@@ -11,6 +11,7 @@
 #include <limits>
 #include <unordered_map>
 #include <array>
+#include <vector>
 
 enum SquareValue {EMPTY, X, O, NO_SQUARE, I};
 enum Direction {N, NE, E, SE, S, SW, W, NW, NO_DIRECTION};
@@ -73,9 +74,13 @@ public:
     bool setValue(SquareValue value, Coord coord);
 
     // Checks if game is won
-    bool isGameWon();
+    bool gameWon();
 
-    bool hasGameEnded();
+    bool gameDrawn();
+
+    bool gameEnded();
+
+    std::vector<Coord> getWinningSquares();
 
     // Returns 1 or 2 depending on which player's turn it is
     unsigned int getPlayerInTurn();
@@ -97,21 +102,23 @@ private:
     // Add all neighbors for a square
     void addNeighbors(Square* square);
 
+    std::unordered_map<Coord, Square*, CoordHash> gameBoard_ = {};
 
-    std::unordered_map<Coord, Square*, CoordHash> gameBoard_;
-
-    const int DIRECTION_VALUES_[8][2] = {
-        {0, 1},   // N
-        {1, 1},   // NE
-        {1, 0},   // E
-        {1, -1},  // SE
-        {0, -1},  // S
-        {-1, -1}, // SW
-        {-1, 0},  // W
-        {-1, 1}   // NW
-    };
+    std::vector<Coord> winningSquareCoords_ = {};
+    std::vector<Coord> tempCoords_ = {};
 
     const Direction DIRECTIONS_[8] = {N, NE, E, SE, S, SW, W, NW};
+
+    const int DIRECTION_VALUES_[8][2] = {
+        {0, 1},   // S
+        {1, 1},   // SE
+        {1, 0},   // E
+        {1, -1},  // NE
+        {0, -1},  // N
+        {-1, -1}, // NW
+        {-1, 0},  // W
+        {-1, 1}   // SW
+    };
 
     Square* latestSquare_ = nullptr;
     unsigned int turnsPlayed_ = 0;

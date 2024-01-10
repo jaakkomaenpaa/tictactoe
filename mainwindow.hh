@@ -7,6 +7,7 @@
 #include <QLabel>
 #include <QComboBox>
 #include <QPushButton>
+#include <unordered_map>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -41,6 +42,10 @@ private slots:
 
     void setSquareValue(Coord coord, QPushButton* square);
 
+    void checkWin();
+
+    void handleGameWin();
+
 private:
 
     Ui::MainWindow *ui;
@@ -48,6 +53,9 @@ private:
     QLabel* turnLabel_;
 
     GameBoard* gameBoard_;
+
+    // Coord from gameboard.hh
+    std::unordered_map<Coord, QPushButton*, CoordHash> squares_;
 
     const unsigned int BOARD_X_COORD_ = 30;
     const unsigned int BOARD_Y_COORD_ = 170;

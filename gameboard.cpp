@@ -1,7 +1,5 @@
 #include "gameboard.hh"
 
-#include <iostream>
-
 using BoardIter = std::unordered_map<Coord, Square*, CoordHash>::iterator;
 using BoardEntry = std::pair<const Coord, Square*>;
 using NeighborEntry = std::pair<const Direction, Square*>;
@@ -44,7 +42,6 @@ bool GameBoard::setValue(SquareValue value, Coord coord) {
     BoardIter square_it = gameBoard_.find(coord);
 
     if (square_it == gameBoard_.end()) {
-        std::cout << "square not found" << "\n";
         return false;
     }
 
@@ -56,13 +53,11 @@ bool GameBoard::setValue(SquareValue value, Coord coord) {
     return true;
 }
 
-bool GameBoard::isGameWon() {
+bool GameBoard::gameWon() {
 
-    /*
     if ((turnsPlayed_+1) / 2 < GOAL_) {
         return false;
     }
-    */
 
     SquareValue valueToCheck = latestSquare_->value;
 
@@ -83,15 +78,29 @@ bool GameBoard::isGameWon() {
         // Sum of original square and values in both directions
         unsigned int sumOfValues = 1 + valuesInDirection + valuesInOpposite;
 
-        std::cout << "Sum: " << sumOfValues << "\n";
-
         if (sumOfValues >= GOAL_) {
+            winningSquareCoords_.assign(tempCoords_.begin(), tempCoords_.end());
             return true;
         }
 
+        tempCoords_.clear();
     }
 
     return false;
+}
+
+bool GameBoard::gameDrawn() {
+
+    for (BoardEntry& entry : gameBoard_) {
+        if (entry.second->value == EMPTY) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool GameBoard::gameEnded() {
+    return gameWon() || gameDrawn();
 }
 
 unsigned int GameBoard::getPlayerInTurn() {
@@ -113,11 +122,17 @@ SquareValue GameBoard::getSquareValue(Coord coord) {
     return it->second->value;
 }
 
+std::vector<Coord> GameBoard::getWinningSquares() {
+
+    return winningSquareCoords_;
+}
+
 /* ################### PRIVATE FUNCTIONS ##################### */
 
 
 unsigned int GameBoard::countValuesInRow(Square* square, int valuesInRow, SquareValue valueToCheck, Direction dir) {
 
+    tempCoords_.push_back(square->location);
     Square* neighbor = square->neighbors[dir];
 
     if (neighbor == nullptr || neighbor->value != valueToCheck) {
